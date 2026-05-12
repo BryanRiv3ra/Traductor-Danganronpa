@@ -1,0 +1,22 @@
+/* Animaciones para los personajes y elementos de la UI */
+
+.animate-float {
+  animation: float-sprite 4s ease-in-out infinite;
+}
+
+@keyframes float-sprite {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+  100% { transform: translateY(0px); }
+}
+
+/* Animación rápida cuando está escribiendo/analizando */
+.is-typing {
+  animation: typing-bounce 0.25s ease-in-out infinite;
+}
+
+@keyframes typing-bounce {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0px); }
+}

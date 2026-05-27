@@ -1,0 +1,636 @@
+.layout-main {
+  display: flex;
+  gap: 2rem;
+  justify-content: space-between;
+  align-items: flex-end;
+  height: 580px; /* Alto fijo en píxeles para asegurar consistencia en todas las pantallas */
+}
+
+.character-panel {
+  width: 300px; /* Ancho fijo para evitar que la UI central se mueva cuando cambia el sprite */
+  flex: none; /* Evita encogimiento o estiramiento */
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  position: relative;
+}
+
+/* Estribo / Pedestal de Juicio Escolar */
+.character-panel::after {
+  content: '';
+  position: absolute;
+  bottom: 80px; /* Elevado para alinearse con los estrados de fondo */
+  width: 90%;
+  height: 40px;
+  background: var(--bg-color);
+  border: 3px solid var(--dr-cyan);
+  /* Efecto de disco 3D en el piso */
+  transform: perspective(300px) rotateX(45deg); 
+  z-index: 0;
+  box-shadow: 0 10px 0 rgba(0, 255, 255, 0.2);
+}
+
+.character-sprite {
+  height: 520px; /* Incrementado de 450px a 520px para hacerlos más grandes */
+  width: auto;
+  max-width: none; /* Permitimos desborde para que no se encoja horizontalmente */
+  object-fit: contain;
+  /* Sombra negra dura tipo cómic / anime en lugar de resplandor */
+  filter: drop-shadow(8px 8px 0px rgba(0,0,0,0.8)); 
+  transform-origin: bottom center;
+  z-index: 2;
+  position: relative;
+  bottom: 80px; /* Elevado para situar su cintura recortada detrás de los estrados */
+}
+
+.compiler-panels {
+  flex: 1; /* Ocupa de forma estable todo el espacio restante en el centro */
+  height: 100%; /* Alto fijo igual al de la layout principal */
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem; /* Reducido de 1.2rem a 0.8rem para optimizar espacio vertical */
+  background: var(--panel-bg);
+  padding: 1.5rem; /* Reducido de 2rem a 1.5rem para optimizar espacio vertical */
+  box-sizing: border-box;
+  
+  /* Bordes afilados y sombra dura rosa */
+  border: 4px solid var(--text-color);
+  box-shadow: 12px 12px 0 var(--dr-pink); 
+  position: relative;
+  z-index: 10;
+}
+
+/* Selector de direccion de traduccion */
+.direction-selector {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.3rem;
+}
+
+.direction-selector select {
+  background: #050505;
+  color: #fff;
+  border: 2px solid #444;
+  padding: 0.3rem 1.5rem;
+  font-size: 1.4rem;
+  font-family: 'Teko', sans-serif;
+  letter-spacing: 1px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.1s;
+}
+
+.direction-selector select:hover,
+.direction-selector select:focus {
+  border-color: var(--dr-cyan);
+  outline: none;
+  background: rgba(0, 255, 255, 0.05);
+}
+
+.direction-selector select option {
+  background: #111;
+  color: #fff;
+}
+
+/* Elemento de mira / cruz en la esquina */
+.compiler-panels::before {
+  content: '✚';
+  position: absolute;
+  top: 10px; right: 15px;
+  font-size: 2rem;
+  color: var(--dr-pink);
+  font-family: monospace;
+}
+
+textarea {
+  flex: 1;
+  background: #050505;
+  border: 2px solid #444;
+  color: #fff;
+  padding: 1.5rem;
+  font-size: 1.8rem;
+  font-family: 'Teko', sans-serif;
+  letter-spacing: 1px;
+  resize: none;
+  transition: all 0.1s;
+}
+
+textarea::placeholder {
+  color: #666;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: var(--dr-cyan);
+  background: rgba(0, 255, 255, 0.05);
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 0;
+}
+
+/* Botón estilo "Disparo de la Verdad" (Truth Bullet) */
+button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  background: var(--text-color);
+  color: #000;
+  border: none;
+  padding: 0.5rem 3rem;
+  font-size: 2.5rem;
+  font-family: 'Anton', sans-serif;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  transform: skewX(-15deg); 
+  box-shadow: 6px 6px 0 var(--dr-pink);
+}
+
+.truth-bullet-icon {
+  height: 40px;
+  transform: rotate(-10deg) skewX(15deg); /* Deshacemos el skew del botón para que no se deforme la bala */
+  filter: drop-shadow(2px 2px 0px rgba(0,0,0,0.5));
+}
+
+button:hover {
+  background: var(--dr-yellow);
+  transform: skewX(-15deg) translate(-2px, -2px);
+  box-shadow: 8px 8px 0 var(--dr-pink);
+}
+
+button:active {
+  transform: skewX(-15deg) translate(4px, 4px);
+  box-shadow: 2px 2px 0 var(--dr-pink);
+}
+
+/* === OVERLAY DEL VIDEO DE ERROR === */
+#error-overlay {
+  position: fixed;
+  top: 0; left: 0; 
+  width: 100vw; height: 100vh;
+  background: black;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none; /* Para no bloquear clicks cuando está oculto */
+  transition: opacity 0.1s;
+}
+
+#error-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+#error-video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* === ESTILOS PARA LOS BOTONES DE DETALLE Y MODALES === */
+.compiler-details-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 1rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.detail-btn {
+  flex: 1;
+  background: #111;
+  color: #fff;
+  border: 3px solid var(--text-color);
+  font-size: 1.4rem;
+  padding: 0.4rem 0.8rem;
+  font-family: 'Teko', sans-serif;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transform: skewX(-12deg);
+  transition: all 0.1s ease;
+  box-shadow: 4px 4px 0 var(--dr-cyan);
+}
+
+.detail-btn:hover {
+  background: var(--dr-cyan);
+  color: #000;
+  box-shadow: 4px 4px 0 var(--dr-pink);
+  text-shadow: 0 0 4px rgba(0,0,0,0.4);
+}
+
+.detail-btn:active {
+  transform: skewX(-12deg) translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--dr-pink);
+}
+
+/* El Modal en sí */
+.dr-modal {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: none; /* Oculto por defecto */
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.dr-modal.active {
+  display: flex;
+  opacity: 1;
+}
+
+/* Contenido del Modal */
+.dr-modal-content {
+  background: rgba(10, 10, 10, 0.98);
+  border: 4px solid var(--text-color);
+  box-shadow: 16px 16px 0 var(--dr-pink);
+  width: 85%;
+  max-width: 950px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transform: scale(0.9) skewX(-2deg);
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  padding: 2.5rem;
+}
+
+.dr-modal.active .dr-modal-content {
+  transform: scale(1) skewX(-2deg);
+}
+
+/* Botón de Cerrar */
+.dr-modal-close {
+  position: absolute;
+  top: 15px; right: 20px;
+  color: var(--dr-pink);
+  font-size: 2.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: monospace;
+}
+
+.dr-modal-close:hover {
+  color: var(--dr-cyan);
+  transform: scale(1.2) rotate(90deg);
+}
+
+.dr-modal-title {
+  font-family: 'Anton', sans-serif;
+  color: #fff;
+  font-size: 2.4rem;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+  border-bottom: 3px solid var(--dr-cyan);
+  padding-bottom: 0.5rem;
+  letter-spacing: 1px;
+  text-shadow: 3px 3px 0 rgba(0,0,0,0.5);
+}
+
+.dr-modal-body {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 250px;
+}
+
+/* Modificar el output editor textarea para ocupar su contenedor */
+#output-editor {
+  width: 100%;
+  height: 100%; /* Ocupar todo el alto disponible */
+  min-height: 100px;
+  background: #050505;
+  border: 2px solid #444;
+  color: #fff;
+  padding: 1.2rem;
+  font-size: 1.8rem;
+  font-family: 'Teko', sans-serif;
+  letter-spacing: 1px;
+  resize: none;
+  transition: all 0.1s;
+  box-sizing: border-box;
+}
+
+#output-editor:focus {
+  outline: none;
+  border-color: var(--dr-cyan);
+  background: rgba(0, 255, 255, 0.05);
+}
+
+/* Estilo para tablas de símbolos */
+.table-scroll {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 340px; /* Aumentado para que se vean más filas */
+  padding: 1.2rem;
+}
+
+.table-scroll-large {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.2rem;
+}
+
+.symbols-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: monospace;
+  font-size: 1.1rem;
+  color: #fff;
+  background: #0c0c0c;
+}
+
+.symbols-table th {
+  background: var(--dr-pink);
+  color: #fff;
+  text-align: left;
+  padding: 10px 12px;
+  border: 2px solid #333;
+  text-transform: uppercase;
+  font-family: 'Teko', sans-serif;
+  font-size: 1.5rem;
+  letter-spacing: 1px;
+}
+
+.symbols-table td {
+  padding: 10px 12px;
+  border: 1px solid #222;
+}
+
+.symbols-table tr:nth-child(even) {
+  background: #141414;
+}
+
+.symbols-table tr:hover {
+  background: rgba(0, 255, 255, 0.15);
+  color: var(--dr-cyan);
+  box-shadow: inset 0 0 5px rgba(0, 255, 255, 0.3);
+}
+
+/* Estilo para el Árbol Sintáctico (AST) */
+.ast-visualizer {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 340px; /* Aumentado */
+  padding: 1.5rem;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 1.2rem;
+  line-height: 1.6;
+  color: var(--dr-cyan);
+  background: #000;
+  text-shadow: 0 0 3px rgba(0, 255, 255, 0.3);
+}
+
+.ast-visualizer-large {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 1.2rem;
+  line-height: 1.6;
+  color: var(--dr-cyan);
+  background: #000;
+  text-shadow: 0 0 3px rgba(0, 255, 255, 0.3);
+}
+
+.ast-node {
+  margin-left: 24px;
+  position: relative;
+  margin-top: 6px;
+}
+
+.ast-node::before {
+  content: '';
+  position: absolute;
+  left: -18px;
+  top: 12px;
+  width: 15px;
+  height: 1px;
+  background: #555;
+  border-top: 1px dashed var(--dr-cyan);
+  opacity: 0.5;
+}
+
+.ast-node::after {
+  content: '';
+  position: absolute;
+  left: -18px;
+  top: -10px;
+  width: 1px;
+  height: 26px;
+  background: #555;
+  border-left: 1px dashed var(--dr-cyan);
+  opacity: 0.5;
+}
+
+.ast-node-header {
+  font-weight: bold;
+  color: var(--dr-yellow);
+  text-shadow: 0 0 5px rgba(252, 226, 5, 0.2);
+}
+
+.ast-token-val {
+  color: #fff;
+  background: rgba(217, 0, 119, 0.3);
+  padding: 2px 8px;
+  border: 1px solid var(--dr-pink);
+  font-weight: bold;
+}
+
+/* Estilo para el análisis semántico */
+.semantic-checks-list {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 340px; /* Aumentado */
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.semantic-checks-list-large {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.semantic-rule-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 0.8rem 1.2rem;
+  background: #111;
+  border-left: 6px solid #444;
+  font-family: 'Teko', sans-serif;
+  font-size: 1.5rem;
+  letter-spacing: 1px;
+  border: 2px solid #222;
+  border-left: 6px solid #444;
+}
+
+.semantic-rule-item.success {
+  border-left-color: #00ff00;
+  background: rgba(0, 255, 0, 0.05);
+}
+
+.semantic-rule-item.fail {
+  border-left-color: var(--dr-pink);
+  background: rgba(217, 0, 119, 0.08);
+}
+
+.semantic-rule-icon {
+  font-size: 1.8rem;
+}
+
+.semantic-rule-name {
+  flex: 1;
+  color: #fff;
+  font-size: 1.6rem;
+}
+
+.semantic-rule-item.success .semantic-rule-name {
+  color: #00ff00;
+  text-shadow: 0 0 5px rgba(0, 255, 0, 0.2);
+}
+
+.semantic-rule-item.fail .semantic-rule-name {
+  color: var(--dr-pink);
+  font-weight: bold;
+  text-shadow: 0 0 5px rgba(217, 0, 119, 0.2);
+}
+
+.semantic-rule-desc {
+  font-size: 1.1rem;
+  color: #aaa;
+  font-family: monospace;
+  margin-top: 2px;
+  line-height: 1.2;
+}
+
+.placeholder-text {
+  margin: auto;
+  color: #555;
+  font-family: 'Teko', sans-serif;
+  font-size: 1.8rem;
+  text-align: center;
+  padding: 3rem;
+  letter-spacing: 1px;
+}
+
+#input-editor {
+  height: 90px; /* Reducido de 110px a 90px para dar más espacio al traductor/error */
+  flex: none;
+}
+
+/* === PERSONALIZACIÓN DE SCROLLBARS (ESTILO DANGANRONPA) === */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0d0d0d;
+  border-left: 1px solid #222;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--dr-pink);
+  border: 2px solid #0d0d0d;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--dr-cyan);
+}
+
+/* === CORTE DE REFUTACIÓN (ERROR WARNING BOX) === */
+#translation-display-container {
+  flex: 1;
+  min-height: 110px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.error-warning-box {
+  height: 100%;
+  margin: 0;
+  background: rgba(217, 0, 119, 0.04);
+  border: 3px solid var(--dr-pink);
+  border-left: 10px solid var(--dr-pink);
+  box-shadow: 6px 6px 0 rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.error-warning-header {
+  background: var(--dr-pink);
+  color: #fff;
+  font-family: 'Anton', sans-serif;
+  font-size: 1.3rem;
+  padding: 6px 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: inline-block;
+  align-self: flex-start;
+  margin-left: -3px;
+  margin-top: -3px;
+  transform: rotate(-1deg);
+  box-shadow: 2px 2px 0 #000;
+  flex-shrink: 0;
+}
+
+.error-warning-body {
+  padding: 1rem;
+  font-family: 'Teko', sans-serif;
+  font-size: 1.6rem;
+  color: #fff;
+  letter-spacing: 1px;
+  flex: 1;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.error-item-card {
+  border-bottom: 1px dashed rgba(217, 0, 119, 0.3);
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+}
+
+.error-item-card:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.error-item-title {
+  color: var(--dr-pink);
+  font-weight: bold;
+  font-size: 1.7rem;
+  margin-bottom: 2px;
+}
+
+.error-item-desc {
+  color: #eee;
+  font-family: monospace;
+  font-size: 1.1rem;
+}

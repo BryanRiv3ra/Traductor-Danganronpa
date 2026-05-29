@@ -20,3 +20,19 @@
   50% { transform: translateY(-8px); }
   100% { transform: translateY(0px); }
 }
+
+.pulse-pink {
+  animation: pulse-pink-btn 1.2s infinite alternate;
+}
+
+@keyframes pulse-pink-btn {
+  0% {
+    box-shadow: 4px 4px 0 var(--dr-cyan);
+    border-color: var(--text-color);
+  }
+  100% {
+    box-shadow: 0 0 8px var(--dr-pink), 4px 4px 0 var(--dr-pink);
+    border-color: var(--dr-pink);
+    color: var(--dr-pink);
+  }
+}

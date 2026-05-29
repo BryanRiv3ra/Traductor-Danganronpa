@@ -310,22 +310,40 @@ btnTranslate.addEventListener('click', async () => {
         window.__ultimosErrores = resultado.tablaErrores || [];
         window.__ultimaFase = resultado.faseExitosa || '';
 
-        if (!resultado.exitoso || resultado.tablaErrores.length > 0) {
-            // Mostrar botón de errores
-            const btnErrors = document.getElementById('btn-view-errors');
-            btnErrors.style.display = 'inline-block';
+        const outputPlaceholder = direccion === "en-es" ? "The translation in Spanish..." : "La traducción en inglés...";
 
-            // Reproducir el video "Sore ga chigauyo" de Danganronpa
-            errorOverlay.classList.add('active');
-            errorVideo.currentTime = 0; // Reiniciar video
-            errorVideo.play();
+        if (resultado.traduccion) {
+            displayContainer.innerHTML = `
+                <textarea id="output-editor" placeholder="${outputPlaceholder}" readonly>${resultado.traduccion}</textarea>
+            `;
             
-            // Cuando termine el video, ocultamos el overlay
-            errorVideo.onended = () => {
-                errorOverlay.classList.remove('active');
-            };
+            if (resultado.tablaErrores && resultado.tablaErrores.length > 0) {
+                // Hay advertencias/errores pero se pudo generar traducción parcial/robustecida
+                const btnErrors = document.getElementById('btn-view-errors');
+                if (btnErrors) {
+                    btnErrors.style.display = 'inline-block';
+                    btnErrors.classList.add('pulse-pink');
+                }
 
-            // Formatear los errores en tarjetas HTML
+                // Reproducir el video "Sore ga chigauyo" de Danganronpa
+                errorOverlay.classList.add('active');
+                errorVideo.currentTime = 0; // Reiniciar video
+                errorVideo.play();
+                
+                // Cuando termine el video, ocultamos el overlay
+                errorVideo.onended = () => {
+                    errorOverlay.classList.remove('active');
+                };
+            } else {
+                // Sin errores
+                const btnErrors = document.getElementById('btn-view-errors');
+                if (btnErrors) {
+                    btnErrors.style.display = 'none';
+                    btnErrors.classList.remove('pulse-pink');
+                }
+            }
+        } else {
+            // Fallo total (sin traducción legible alguna)
             const erroresCards = resultado.tablaErrores.map(err => `
                 <div class="error-item-card">
                     <div class="error-item-title">❌ ERROR ${err.tipo.toUpperCase()}</div>
@@ -344,13 +362,12 @@ btnTranslate.addEventListener('click', async () => {
                     </div>
                 </div>
             `;
-        } else {
-            // Ocultar botón de errores si no hay
-            document.getElementById('btn-view-errors').style.display = 'none';
-            const outputPlaceholder = direccion === "en-es" ? "The translation in Spanish..." : "La traducción en inglés...";
-            displayContainer.innerHTML = `
-                <textarea id="output-editor" placeholder="${outputPlaceholder}" readonly>${resultado.traduccion}</textarea>
-            `;
+            
+            const btnErrors = document.getElementById('btn-view-errors');
+            if (btnErrors) {
+                btnErrors.style.display = 'inline-block';
+                btnErrors.classList.add('pulse-pink');
+            }
         }
 
         // 2. Renderizar la Tabla de Símbolos en el Modal (Léxico)

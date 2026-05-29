@@ -74,79 +74,58 @@ async function compilar(texto, direccion = "es-en") {
   const tablaSimbolos = _generarTablaSimbolos(resLexico.tokens);
   const erroresLexicos = resLexico.errors;
 
-  if (erroresLexicos.length > 0) {
-    return {
-      entrada:       texto,
-      traduccion:    null,
-      tipoOracion:   null,
-      tablaSimbolos,
-      tablaErrores:  _formatearErrores(erroresLexicos, [], []),
-      tokens:        resLexico.tokens,
-      arbol:         null,
-      exitoso:       false,
-      faseExitosa:   "ninguna",
-      resumen:       { lexico: false, sintactico: false, semantico: false, traduccion: false },
-      mensaje:       `❌ Se encontraron ${erroresLexicos.length} error(es) léxico(s). Corrija el texto antes de continuar.`
-    };
-  }
-
   // ── FASE 2: Análisis Sintáctico ───────────
-  const resSintactico = _analizarSintactico(resLexico, direccion);
+  let resSintactico = { arbol: null, errors: [], tipoOracion: null };
+  if (resLexico.tokens.length > 0) {
+    resSintactico = _analizarSintactico(resLexico, direccion);
+  } else {
+    resSintactico.errors.push({ tipo: "Sintáctico", descripcion: "No se encontraron tokens válidos para analizar.", posicion: 0, palabra: "" });
+  }
   const erroresSintacticos = resSintactico.errors;
 
-  if (erroresSintacticos.length > 0) {
-    return {
-      entrada:       texto,
-      traduccion:    null,
-      tipoOracion:   resSintactico.tipoOracion,
-      tablaSimbolos,
-      tablaErrores:  _formatearErrores([], erroresSintacticos, []),
-      tokens:        resLexico.tokens,
-      arbol:         resSintactico.arbol,
-      exitoso:       false,
-      faseExitosa:   "lexico",
-      resumen:       { lexico: true, sintactico: false, semantico: false, traduccion: false },
-      mensaje:       `❌ Se encontraron ${erroresSintacticos.length} error(es) sintáctico(s). Corrija la estructura de la oración.`
-    };
-  }
-
   // ── FASE 3: Análisis Semántico ────────────
-  const resSemantico = _analizarSemantico(resSintactico, resLexico.tokens, direccion);
+  let resSemantico = { errors: [] };
+  if (resSintactico.arbol) {
+    resSemantico = _analizarSemantico(resSintactico, resLexico.tokens, direccion);
+  }
   const erroresSemanticos = resSemantico.errors;
 
-  if (erroresSemanticos.length > 0) {
-    return {
-      entrada:       texto,
-      traduccion:    null,
-      tipoOracion:   resSintactico.tipoOracion,
-      tablaSimbolos,
-      tablaErrores:  _formatearErrores([], [], erroresSemanticos),
-      tokens:        resLexico.tokens,
-      arbol:         resSintactico.arbol,
-      exitoso:       false,
-      faseExitosa:   "sintactico",
-      resumen:       { lexico: true, sintactico: true, semantico: false, traduccion: false },
-      mensaje:       `❌ Se encontraron ${erroresSemanticos.length} error(es) semántico(s). Corrija el uso del lenguaje.`
-    };
-  }
-
-  // ── FASE 4: Traducción ────────────────────
+  // ── FASE 4: Traducción (Best-effort / Fallback) ──
   const resTraduccion = _generarTraduccion(resLexico, resSintactico, resSemantico, direccion);
+
+  const tablaErrores = _formatearErrores(erroresLexicos, erroresSintacticos, erroresSemanticos);
+  const exitoso = erroresLexicos.length === 0 && erroresSintacticos.length === 0 && erroresSemanticos.length === 0;
+
+  let faseExitosa = "ninguna";
+  if (erroresLexicos.length === 0) {
+    faseExitosa = "lexico";
+    if (erroresSintacticos.length === 0) {
+      faseExitosa = "sintactico";
+      if (erroresSemanticos.length === 0) {
+        faseExitosa = "semantico";
+      }
+    }
+  }
 
   return {
     entrada:       texto,
     traduccion:    resTraduccion.traduccion,
     tipoOracion:   resSintactico.tipoOracion,
     tablaSimbolos,
-    tablaErrores:  [],
+    tablaErrores,
     tokens:        resLexico.tokens,
     arbol:         resSintactico.arbol,
-    exitoso:       resTraduccion.exitoso,
-    faseExitosa:   "semantico",
-    resumen:       { lexico: true, sintactico: true, semantico: true, traduccion: true },
-    mensaje:       resTraduccion.exitoso
-                     ? `✅ Traducción generada correctamente.`
-                     : `❌ Error inesperado al generar la traducción.`
+    exitoso:       exitoso,
+    faseExitosa:   faseExitosa,
+    resumen:       {
+      lexico:      erroresLexicos.length === 0,
+      sintactico:  erroresSintacticos.length === 0,
+      semantico:   erroresSemanticos.length === 0,
+      traduccion:  resTraduccion.traduccion !== null
+    },
+    mensaje: exitoso
+      ? `✅ Traducción generada correctamente.`
+      : `⚠️ Se encontraron ${tablaErrores.length} advertencia(s)/error(es). Se generó una traducción aproximada.`
   };
 }
 

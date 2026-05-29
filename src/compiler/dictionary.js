@@ -202,7 +202,7 @@ function fuzzyLookup(word) {
       best = dictKey;
     }
   }
-  const maxDist = key.length <= 4 ? 0 : (key.length <= 6 ? 1 : 2);
+  const maxDist = key.length <= 3 ? 0 : (key.length <= 6 ? 1 : 2);
   if (bestDist <= maxDist) {
     return { entry: dictionary[best], matched: best, distance: bestDist };
   }

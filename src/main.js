@@ -7,7 +7,7 @@ import { compilar } from './compiler/compiler.js';
 document.querySelector('#app').innerHTML = `
   <div class="app-container">
     <header>
-      <h1>✨ Traductor Neural ✨</h1>
+      <h1>✨ Truth Bullet Translator ✨</h1>
     </header>
     <main class="layout-main">
       <div class="character-panel left" id="char-english">

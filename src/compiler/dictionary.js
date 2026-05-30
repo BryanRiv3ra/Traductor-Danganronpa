@@ -123,25 +123,56 @@ Object.keys(spanishToEnglishDictionary).forEach(spanWord => {
       if (conjugated) {
         const conjugatedLower = conjugated.toLowerCase();
         if (EXCEPCIONES_PREVENCION_VERBO.includes(conjugatedLower)) return;
-        const existing = spanishToEnglishDictionary[conjugatedLower];
-        if (!existing || existing.token !== "VERB") {
-          let baseEnglish = entry.translation;
-          if (baseEnglish.endsWith("s") && baseEnglish !== "is" && baseEnglish !== "has" && baseEnglish !== "was") {
-            if (baseEnglish.endsWith("es")) {
-              baseEnglish = baseEnglish.slice(0, -2);
-            } else {
-              baseEnglish = baseEnglish.slice(0, -1);
-            }
+      const existing = spanishToEnglishDictionary[conjugatedLower];
+      if (!existing) {
+        let baseEnglish = entry.translation;
+        if (baseEnglish.endsWith("s") && baseEnglish !== "is" && baseEnglish !== "has" && baseEnglish !== "was") {
+          if (baseEnglish.endsWith("es")) {
+            baseEnglish = baseEnglish.slice(0, -2);
+          } else {
+            baseEnglish = baseEnglish.slice(0, -1);
           }
-          spanishToEnglishDictionary[conjugatedLower] = {
-            token: "VERB",
-            category: "Verbo",
-            translation: baseEnglish
-          };
         }
+        spanishToEnglishDictionary[conjugatedLower] = {
+          token: "VERB",
+          category: "Verbo",
+          translation: baseEnglish
+        };
+      }
       }
     });
   }
+});
+
+// 4. Sobrescribir pronombres clíticos del español
+const CLITICOS = {
+  "se":   { token: "CLIT", category: "Pronombre clítico", translation: "oneself" },
+  "me":   { token: "CLIT", category: "Pronombre clítico", translation: "me" },
+  "te":   { token: "CLIT", category: "Pronombre clítico", translation: "you" },
+  "le":   { token: "CLIT", category: "Pronombre clítico", translation: "him/her" },
+  "nos":  { token: "CLIT", category: "Pronombre clítico", translation: "us" },
+  "lo":   { token: "CLIT", category: "Pronombre clítico", translation: "him/it" },
+  "la":   { token: "CLIT", category: "Pronombre clítico", translation: "her/it" },
+  "los":  { token: "CLIT", category: "Pronombre clítico", translation: "them" },
+  "las":  { token: "CLIT", category: "Pronombre clítico", translation: "them" }
+};
+Object.entries(CLITICOS).forEach(([word, entry]) => {
+  spanishToEnglishDictionary[word] = entry;
+});
+
+// 5. Verbos reflexivos — claves compuestas "se " + verbo para lookup en traducción
+const REFLEXIVE_KEYS = {
+  "se aproxima": { token: "VERB", category: "Verbo reflexivo", translation: "approach" },
+  "se aproximan": { token: "VERB", category: "Verbo reflexivo", translation: "approach" },
+  "se aproximas": { token: "VERB", category: "Verbo reflexivo", translation: "approach" },
+  "se aproximamos": { token: "VERB", category: "Verbo reflexivo", translation: "approach" },
+  "se va": { token: "VERB", category: "Verbo reflexivo", translation: "go away" },
+  "se van": { token: "VERB", category: "Verbo reflexivo", translation: "go away" },
+  "se llama": { token: "VERB", category: "Verbo reflexivo", translation: "is called" },
+  "se llaman": { token: "VERB", category: "Verbo reflexivo", translation: "are called" },
+};
+Object.entries(REFLEXIVE_KEYS).forEach(([word, entry]) => {
+  spanishToEnglishDictionary[word] = entry;
 });
 
 // Mapear el diccionario en español como el diccionario exportado
@@ -202,7 +233,7 @@ function fuzzyLookup(word) {
       best = dictKey;
     }
   }
-  const maxDist = key.length <= 3 ? 0 : (key.length <= 6 ? 1 : 2);
+  const maxDist = key.length <= 4 ? 0 : (key.length <= 6 ? 1 : 2);
   if (bestDist <= maxDist) {
     return { entry: dictionary[best], matched: best, distance: bestDist };
   }

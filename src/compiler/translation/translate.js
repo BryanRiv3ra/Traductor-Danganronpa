@@ -68,6 +68,11 @@ function traducirToken(tok) {
     return "";
   }
 
+  // For articles and determiners resolved by the lexer, use the token's traduccion directly
+  if (["ART_DEF", "ART_INDEF", "POS", "PRON_DEM", "DET_INDEF"].includes(tok.token) && tok.traduccion) {
+    return limpiarTraduccion(tok.traduccion);
+  }
+
   let dictEntry = lookupWord(palabraLower);
   let esPluralEspanol = false;
   
@@ -219,6 +224,7 @@ function traducir(tokensLexer, tipoOracion) {
   let verb2Token = null;
   let subjectTokens = [];
   let negationToken = null;
+  let clitSeToken = null;
   let restTokens = [];
 
   const verbos = [];
@@ -232,6 +238,10 @@ function traducir(tokensLexer, tipoOracion) {
 
   if (verbos.length > 0) {
     verbToken = verbos[0].token;
+    const idxV = verbos[0].index;
+    if (idxV > 0 && tokens[idxV - 1].token === "CLIT" && tokens[idxV - 1].palabra.toLowerCase() === "se") {
+      clitSeToken = tokens[idxV - 1];
+    }
     if (verbos.length > 1) {
       verb2Token = verbos[1].token;
     }
@@ -240,7 +250,7 @@ function traducir(tokensLexer, tipoOracion) {
   const idxVerb = verbos.length > 0 ? verbos[0].index : -1;
   let subjectFoundBefore = false;
   if (idxVerb !== -1) {
-    const tokensAntes = tokens.slice(0, idxVerb).filter(t => t.token !== "ADV_NEG");
+    const tokensAntes = tokens.slice(0, idxVerb).filter(t => t.token !== "ADV_NEG" && t.token !== "CLIT");
     const tieneSustOPron = tokensAntes.some(t => ["NOUN", "PRON_PERS", "PROPN"].includes(t.token));
     if (tieneSustOPron) {
       subjectTokens = tokensAntes;
@@ -269,6 +279,7 @@ function traducir(tokensLexer, tipoOracion) {
         const t = tokensDespues[i];
         if (t.token === "PREP") break;
         if (t.token === "VERB" && t !== verb2Token) break;
+        if (t.token === "CLIT") continue;
         potentialSubject.push(t);
       }
       const tieneSustOPron = potentialSubject.some(t => ["NOUN", "PRON_PERS", "PROPN"].includes(t.token));
@@ -279,7 +290,7 @@ function traducir(tokensLexer, tipoOracion) {
   }
 
   tokens.forEach((t, idx) => {
-    if (t === verbToken || t === verb2Token || t === negationToken) return;
+    if (t === verbToken || t === verb2Token || t === negationToken || t === clitSeToken) return;
     if (subjectTokens.includes(t)) return;
     restTokens.push(t);
   });
@@ -337,8 +348,20 @@ function traducir(tokensLexer, tipoOracion) {
   const isModal = VERB_MODAL_SPANISH.includes(verbLower);
   const isQuerer = ["quiero", "quieres", "quiere", "queremos", "quieren", "quisiera"].includes(verbLower);
 
-  const verb1Base = verbToken ? traducirToken(verbToken) : "";
-  const verb2Base = verb2Token ? traducirToken(verb2Token) : "";
+  let verb1Base = verbToken ? traducirToken(verbToken) : "";
+  let verb2Base = verb2Token ? traducirToken(verb2Token) : "";
+
+  if (clitSeToken) {
+    const reflexEntry = lookupWord("se " + verbLower);
+    if (reflexEntry) {
+      const rt = limpiarTraduccion(reflexEntry.translation);
+      const rtWords = rt.toLowerCase().split(/\s+/);
+      if (rtWords.length === 1 && rt.toLowerCase() !== verb1Base.toLowerCase()) {
+        verb1Base = rt;
+        verb2Base = verb2Token ? traducirToken(verb2Token) : "";
+      }
+    }
+  }
 
   if (tipoOracion === "Interrogativa") {
     let aux = "";
@@ -505,19 +528,7 @@ function convertirFraseNominalEspanol(grupo) {
     const nounPlural = headNounWord ? esPlural(headNounWord) : false;
 
     for (const art of articulos) {
-      let trad;
-      if (headNounWord) {
-        trad = traducirArticulo(art.palabra, headNounWord);
-        if (nounPlural) {
-          if (trad === "el") trad = "los";
-          else if (trad === "la") trad = "las";
-          else if (trad === "un") trad = "unos";
-          else if (trad === "una") trad = "unas";
-        }
-      } else {
-        trad = art.traduccion || art.palabra;
-      }
-      resultado.push(trad);
+      resultado.push(art.traduccion || art.palabra);
     }
 
     for (const tok of otros) {

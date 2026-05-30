@@ -11,7 +11,8 @@ function verificarTiempoVerbal(tokens, errors) {
             tipo: "Semántico",
             descripcion: `Tiempo verbal incorrecto: '${tok.palabra}' no es una forma válida. La forma correcta es '${correcto}'.`,
             posicion: tok.posicion,
-            palabra: tok.palabra
+            palabra: tok.palabra,
+            sugerencia: `Usa '${correcto}' en lugar de '${tok.palabra}'`
           });
         }
       }

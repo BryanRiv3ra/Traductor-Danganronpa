@@ -4,7 +4,9 @@ import { imprimirArbol } from "./treePrinter.js";
 function analizarSintactico(resultadoLexer, direccion = "es-en") {
   const { tokens, errors: erroresLexicos } = resultadoLexer;
 
-  if (erroresLexicos && erroresLexicos.length > 0) {
+  const erroresBloqueantes = (erroresLexicos || []).filter(e => !e.leve);
+
+  if (erroresBloqueantes.length > 0) {
     return {
       arbol: null,
       errors: [],

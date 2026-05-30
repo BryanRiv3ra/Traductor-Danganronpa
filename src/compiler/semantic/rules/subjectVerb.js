@@ -58,7 +58,8 @@ function verificarConcordancia(tokens, errors) {
       tipo: "Semántico",
       descripcion: `Concordancia de número incorrecta: el sujeto es singular pero el verbo '${tokenVerbo.palabra}' es plural.`,
       posicion: tokenVerbo.posicion,
-      palabra: tokenVerbo.palabra
+      palabra: tokenVerbo.palabra,
+      sugerencia: `Cambia el verbo '${tokenVerbo.palabra}' a su forma singular`
     });
   }
 
@@ -67,7 +68,8 @@ function verificarConcordancia(tokens, errors) {
       tipo: "Semántico",
       descripcion: `Concordancia de número incorrecta: el sujeto es plural pero el verbo '${tokenVerbo.palabra}' es singular.`,
       posicion: tokenVerbo.posicion,
-      palabra: tokenVerbo.palabra
+      palabra: tokenVerbo.palabra,
+      sugerencia: `Cambia el verbo '${tokenVerbo.palabra}' a su forma plural`
     });
   }
 }

@@ -33,7 +33,8 @@ function verificarVerbosModales(tokens, errors) {
             tipo: "Semántico",
             descripcion: `Después del verbo modal '${tok.palabra}' el verbo debe ir en infinitivo (terminar en -ar, -er, -ir), no '${siguienteVerbo.palabra}'.`,
             posicion: siguienteVerbo.posicion,
-            palabra: siguienteVerbo.palabra
+            palabra: siguienteVerbo.palabra,
+            sugerencia: `Cambia '${siguienteVerbo.palabra}' a su forma infinitiva (-ar, -er, -ir)`
           });
         }
       }

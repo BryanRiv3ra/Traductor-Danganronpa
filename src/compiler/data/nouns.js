@@ -189,6 +189,31 @@ const nouns = {
     category: "Sustantivo",
     translation: "luna"
   },
+  "sea": {
+    token: "NOUN",
+    category: "Sustantivo",
+    translation: "mar"
+  },
+  "sea": {
+    token: "NOUN",
+    category: "Sustantivo",
+    translation: "mar"
+  },
+  "color": {
+    token: "NOUN",
+    category: "Sustantivo",
+    translation: "color"
+  },
+  "number": {
+    token: "NOUN",
+    category: "Sustantivo",
+    translation: "número"
+  },
+  "age": {
+    token: "NOUN",
+    category: "Sustantivo",
+    translation: "edad"
+  },
   "sky": {
     token: "NOUN",
     category: "Sustantivo",

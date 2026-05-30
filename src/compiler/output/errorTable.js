@@ -4,7 +4,10 @@ const ESTILO_ERROR = {
   "Semántico": { clase: "error-semantico", icono: "🧠", color: "#9b59b6", fase: 3 }
 };
 
-function extraerSugerencia(descripcion) {
+function extraerSugerencia(error) {
+  if (!error) return null;
+  if (error.sugerencia) return error.sugerencia;
+  const descripcion = error.descripcion;
   if (!descripcion) return null;
   const match = descripcion.match(/¿Quisiste decir '(.+?)'\?/);
   if (match) return `Usa: "${match[1]}"`;
@@ -24,7 +27,7 @@ function generarTablaErrores(erroresLexicos = [], erroresSintacticos = [], error
     return {
       numero: index + 1, fase: estilo.fase, tipo: e.tipo, icono: estilo.icono,
       palabra: e.palabra || "", posicion: e.posicion || 0,
-      descripcion: e.descripcion, sugerencia: extraerSugerencia(e.descripcion) || "—"
+      descripcion: e.descripcion, sugerencia: extraerSugerencia(e) || "—"
     };
   });
 }
@@ -36,7 +39,7 @@ function generarTablaErroresDesdeCompiler(resultadoCompiler) {
     return {
       numero: index + 1, fase: estilo.fase, tipo: e.tipo, icono: estilo.icono,
       palabra: e.palabra || "", posicion: e.posicion || 0,
-      descripcion: e.descripcion, sugerencia: extraerSugerencia(e.descripcion) || "—"
+      descripcion: e.descripcion, sugerencia: extraerSugerencia(e) || "—"
     };
   });
 }

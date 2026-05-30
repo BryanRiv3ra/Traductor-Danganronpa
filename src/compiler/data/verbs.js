@@ -72,7 +72,7 @@ const verbs = {
   "go": {
     token: "VERB",
     category: "Verbo",
-    translation: "ir"
+    translation: "ir/irse"
   },
   "goes": {
     token: "VERB",
@@ -487,7 +487,7 @@ const verbs = {
   "call": {
     token: "VERB",
     category: "Verbo",
-    translation: "llamar"
+    translation: "llamar/llamarse"
   },
   "calls": {
     token: "VERB",
@@ -622,7 +622,7 @@ const verbs = {
   "leave": {
     token: "VERB",
     category: "Verbo",
-    translation: "salir/dejar"
+    translation: "salir/dejar/irse"
   },
   "leaves": {
     token: "VERB",
@@ -897,7 +897,7 @@ const verbs = {
   "approach": {
     token: "VERB",
     category: "Verbo",
-    translation: "acercar/aproximar"
+    translation: "acercar/aproximar/aproximarse"
   },
   "approaches": {
     token: "VERB",

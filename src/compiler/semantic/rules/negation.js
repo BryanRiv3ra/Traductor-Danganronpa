@@ -11,7 +11,8 @@ function verificarNegacion(tokens, errors) {
           tipo: "Semántico",
           descripcion: `La partícula de negación '${tok.palabra}' está al final de la oración sin un verbo que negar.`,
           posicion: tok.posicion,
-          palabra: tok.palabra
+          palabra: tok.palabra,
+          sugerencia: `Agrega un verbo después de '${tok.palabra}' o elimina la negación`
         });
         continue;
       }
@@ -24,7 +25,8 @@ function verificarNegacion(tokens, errors) {
           tipo: "Semántico",
           descripcion: `La partícula de negación '${tok.palabra}' no tiene un verbo asociado más adelante.`,
           posicion: tok.posicion,
-          palabra: tok.palabra
+          palabra: tok.palabra,
+          sugerencia: `Agrega un verbo después de '${tok.palabra}'`
         });
       }
     }

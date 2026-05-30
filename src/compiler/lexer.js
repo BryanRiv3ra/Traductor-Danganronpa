@@ -4,6 +4,15 @@ const _dictionary = dictionary;
 const _lookupWord = lookupWord;
 const _fuzzyLookup = fuzzyLookup;
 
+// Pre-build normalized→original mapping for accented dictionary entries
+const NORMALIZED_SOURCE = {};
+for (const [key, entry] of Object.entries(_dictionary)) {
+  const norm = normalizarTildes(key);
+  if (norm !== key) {
+    NORMALIZED_SOURCE[norm] = { original: key, entry };
+  }
+}
+
 import { REGEX } from "./lexical/patterns.js";
 import { CONTRACTIONS } from "./lexical/contractions.js";
 
@@ -188,16 +197,90 @@ async function analizarLexico(texto, direccion = "es-en") {
     if (REGEX.WORD.test(raw) || (esEN && REGEX.WORD.test(raw.replace("'", "")))) {
       const entry = lookupSource(rawLower);
       if (entry) {
-        let traduccion = entry.translation;
-        if (esEN && entry.esPlural) traduccion = pluralizarEspanol(traduccion);
+        // Ambiguous: "la","los","las" can be ART_DEF or CLIT — use ART_DEF if next token is a NOUN
+        let resolvedEntry = entry;
+        if (!esEN && (rawLower === "la" || rawLower === "los" || rawLower === "las") && entry.token === "CLIT") {
+          const nextIdx = i + 1;
+          if (nextIdx < rawTokens.length) {
+            const nextWord = rawTokens[nextIdx].toLowerCase().replace(/[^a-záéíóúüñ]/g, "");
+            if (nextWord) {
+              let esNoun = false;
+              const nextDictEntry = lookupSource(nextWord);
+              if (nextDictEntry && nextDictEntry.token === "NOUN") {
+                esNoun = true;
+              }
+              // Check fuzzy/plural for the next word
+              if (!esNoun) {
+                const fuzzyNext = fuzzySource(nextWord);
+                if (fuzzyNext && fuzzyNext.entry.token === "NOUN") {
+                  esNoun = true;
+                }
+              }
+              if (!esNoun && nextWord.endsWith("s") && nextWord.length > 2) {
+                const singularGuess = nextWord.slice(0, -1);
+                const singEntry = lookupSource(singularGuess);
+                if (singEntry && singEntry.token === "NOUN") {
+                  esNoun = true;
+                }
+              }
+              // Check if next word is a numeral followed by a noun (e.g. "los cuatro puntos")
+              if (!esNoun) {
+                const nextDictEntry2 = lookupSource(nextWord);
+                if (nextDictEntry2 && ["NUM_CARD", "NUM_ORD", "NUM_LITERAL"].includes(nextDictEntry2.token)) {
+                  const afterNumIdx = nextIdx + 1;
+                  if (afterNumIdx < rawTokens.length) {
+                    const afterNumWord = rawTokens[afterNumIdx].toLowerCase().replace(/[^a-záéíóúüñ]/g, "");
+                    if (afterNumWord) {
+                      const numNextEntry = lookupSource(afterNumWord);
+                      if (numNextEntry && numNextEntry.token === "NOUN") {
+                        esNoun = true;
+                      }
+                      if (!esNoun) {
+                        const fuzzyNum = fuzzySource(afterNumWord);
+                        if (fuzzyNum && fuzzyNum.entry.token === "NOUN") {
+                          esNoun = true;
+                        }
+                      }
+                      if (!esNoun && afterNumWord.endsWith("s") && afterNumWord.length > 2) {
+                        const sg = afterNumWord.slice(0, -1);
+                        const sgEntry = lookupSource(sg);
+                        if (sgEntry && sgEntry.token === "NOUN") {
+                          esNoun = true;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              if (esNoun) {
+                resolvedEntry = { token: "ART_DEF", category: "Artículo definido", translation: "the" };
+              }
+            }
+          }
+        }
+        let traduccion = resolvedEntry.translation;
+        if (esEN && resolvedEntry.esPlural) traduccion = pluralizarEspanol(traduccion);
         tokens.push({
           posicion: posicion,
           palabra: raw,
-          token: entry.token,
-          categoria: entry.category,
+          token: resolvedEntry.token,
+          categoria: resolvedEntry.category,
           traduccion: traduccion
         });
       } else {
+        const normalized = normalizarTildes(rawLower);
+        const normLookup = lookupSource(normalized) || NORMALIZED_SOURCE[normalized];
+        if (normLookup) {
+          const normEntry = normLookup.entry || normLookup;
+          let traduccion = normEntry.translation;
+          if (esEN && normEntry.esPlural) traduccion = pluralizarEspanol(traduccion);
+          const originalWord = normLookup.original || normalized;
+          const accented = normalized !== rawLower;
+          tokens.push({ posicion, palabra: raw, token: normEntry.token, categoria: normEntry.category + (accented ? ` (Corregido: ${originalWord})` : ""), traduccion });
+          errors.push({ tipo: "Semántico", leve: true, descripcion: accented ? `Palabra sin tilde: se esperaba '${normalized}'` : `Palabra sin tilde: se esperaba '${originalWord}'`, posicion, palabra: raw, sugerencia: `Corrige la tilde: '${raw}' → '${accented ? normalized : originalWord}'` });
+          posicion++;
+          continue;
+        }
         const fuzzy = fuzzySource(rawLower);
         if (fuzzy) {
           let traduccion = fuzzy.entry.translation;
@@ -452,6 +535,11 @@ function generarTablaErrores(errors) {
   }));
 }
 
+function normalizarTildes(palabra) {
+  const map = { 'á':'a','é':'e','í':'i','ó':'o','ú':'u','ü':'u','ñ':'n','Á':'A','É':'E','Í':'I','Ó':'O','Ú':'U','Ü':'U','Ñ':'N' };
+  return palabra.replace(/[áéíóúüñÁÉÍÓÚÜÑ]/g, m => map[m] || m);
+}
+
 function hayErroresLexicos(errors) {
   return errors.some(e => e.tipo === "Léxico");
 }
@@ -461,6 +549,7 @@ export {
     generarTablaSimbolos,
     generarTablaErrores,
     hayErroresLexicos,
+    normalizarTildes,
     REGEX,
     CONTRACTIONS
   };

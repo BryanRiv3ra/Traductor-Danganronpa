@@ -40,10 +40,23 @@ class Parser {
 
   parseFraseNominal() {
     const nodo = { tipo: "FraseNominal", hijos: [] };
-    while (this.esGrupo("DETERMINANTES")) nodo.hijos.push({ tipo: "Determinante", token: this.consume() });
+    const numCardConsumido = this.esToken("NUM_CARD") || this.esToken("NUM_LITERAL");
+    while (this.esGrupo("DETERMINANTES")) {
+      const tok = this.consume();
+      nodo.hijos.push({ tipo: "Determinante", token: tok });
+    }
+    if (!this.actual() && nodo.hijos.length > 0) {
+      const ultDet = nodo.hijos[nodo.hijos.length - 1].token;
+      if (ultDet.token === "NUM_CARD" || ultDet.token === "NUM_LITERAL") {
+        nodo.hijos[nodo.hijos.length - 1] = { tipo: "Numeral", token: ultDet };
+        return nodo;
+      }
+    }
     while (this.esToken("ADJ")) nodo.hijos.push({ tipo: "Adjetivo", token: this.consume() });
     if (this.esToken("NOUN")) {
       nodo.hijos.push({ tipo: "Sustantivo", token: this.consume() });
+    } else if (numCardConsumido || this.esToken("NUM_CARD") || this.esToken("NUM_LITERAL")) {
+      nodo.hijos.push({ tipo: "Numeral", token: this.consume() });
     } else {
       this.agregarError(`Se esperaba un sustantivo${this.actual() ? ` pero se encontró '${this.actual().palabra}' (${this.actual().token})` : " pero se llegó al final de la oración"}`);
     }
@@ -53,13 +66,17 @@ class Parser {
 
   parseSujeto() {
     const nodo = { tipo: "Sujeto", hijos: [] };
-    if (this.esToken("PRON_PERS") || this.esToken("PRON_DEM")) {
+    if (this.esToken("PRON_PERS")) {
+      nodo.hijos.push({ tipo: "Pronombre", token: this.consume() });
+    } else if (this.esToken("PRON_DEM") && this.siguiente() && this.siguiente().token !== "NOUN") {
       nodo.hijos.push({ tipo: "Pronombre", token: this.consume() });
     } else if (this.esGrupo("DETERMINANTES")) {
       nodo.hijos.push({ tipo: "Determinante", token: this.consume() });
       if (this.esToken("ADJ")) nodo.hijos.push({ tipo: "Adjetivo", token: this.consume() });
       if (this.esToken("NOUN")) {
         nodo.hijos.push({ tipo: "Sustantivo", token: this.consume() });
+      } else if (this.esToken("NUM_CARD") || this.esToken("NUM_LITERAL")) {
+        nodo.hijos.push({ tipo: "Numeral", token: this.consume() });
       } else {
         this.agregarError(`Artículo o determinante sin sustantivo después de '${this.tokens[this.pos-1].palabra}'`);
       }
@@ -131,6 +148,10 @@ class Parser {
 
   parsePredicado() {
     const nodo = { tipo: "Predicado", hijos: [] };
+    // Consumir clíticos opcionales antes del verbo
+    while (this.actual() && this.esGrupo("CLÍTICOS")) {
+      nodo.hijos.push({ tipo: "Clítico", token: this.consume() });
+    }
     if (!this.esToken("VERB")) {
       this.agregarError(`Se esperaba un verbo${this.actual() ? ` pero se encontró '${this.actual().palabra}' (${this.actual().token})` : " pero se llegó al final de la oración"}`);
       return nodo;
@@ -157,7 +178,7 @@ class Parser {
     if (!this.actual()) return nodo;
     
     // El sujeto es opcional en español (sujeto tácito)
-    if (this.actual() && this.actual().token !== "VERB") {
+    if (this.actual() && this.actual().token !== "VERB" && this.actual().token !== "CLIT") {
       nodo.hijos.push(this.parseSujeto());
     }
     
@@ -308,6 +329,18 @@ class Parser {
     else {
       this.arbol = this.parseOracionDeclarativa();
       if (tipo === "exclamativa") this.tipoOracion = "Exclamativa";
+    }
+
+    if (this.direccion === "es-en" && tipo === "declarativa") {
+      const sinPunt = this.tokens.filter(t => !GRUPOS.PUNTUACION.includes(t.token));
+      if (sinPunt.length > 0 && sinPunt[0].token === "VERB") {
+        this.errors.push({
+          tipo: "Sintáctico",
+          descripcion: "Orden de oración incorrecto: la oración no puede iniciar con un verbo conjugado en modo indicativo",
+          posicion: 1,
+          palabra: sinPunt[0].palabra
+        });
+      }
     }
 
     while (this.actual()) {

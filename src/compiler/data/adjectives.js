@@ -24,6 +24,11 @@ const adjectives = {
     category: "Adjetivo calificativo",
     translation: "bueno/buena"
   },
+  "favorite": {
+    token: "ADJ",
+    category: "Adjetivo calificativo",
+    translation: "favorito/favorita"
+  },
   "bad": {
     token: "ADJ",
     category: "Adjetivo calificativo",
